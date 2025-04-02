@@ -1,114 +1,122 @@
-# Text Translator
+# Translator Pro
 
-A screen OCR translator powered by Large Language Models (LLMs). Captures text from the screen, translates it using providers such as DeepSeek, OpenAI, and others.
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Features
+Translator Pro - это приложение для мгновенного распознавания и перевода текста с экрана, использующее технологии OCR и большие языковые модели (LLM). Программа позволяет захватывать текст с любой части экрана и быстро переводить его между английским, русским и японским языками.
 
-- 🖼️ Screen capture modes:
-  - Full window capture
-  - Area selection capture
-  - File import support
-- 📝 OCR capabilities:
-  - Tesseract OCR integration
-  - Support for multiple languages
-  - High accuracy text recognition
-- 🌐 Translation features:
-  - Multiple LLM providers support (DeepSeek, OpenAI)
-  - Real-time translation
-  - History tracking
-- 🎨 Modern UI:
-  - Catppuccin theme support
-  - Multiple color schemes
-  - User-friendly interface
+![Translator Pro Screenshot](https://raw.githubusercontent.com/username/text-translator/main/docs/screenshot.png)
 
-## Installation
+## Возможности
 
-1. Clone the repository:
+- **Мгновенное OCR**: Приложение в реальном времени распознаёт текст внутри выбранного окна или области с помощью OCR и передаёт его в модуль перевода.
+
+- **Перевод через LLM-API**: Для перевода используется внешнее API больших языковых моделей (OpenAI GPT-4 или DeepSeek) – все переводы выполняются онлайн через сторонние сервисы.
+
+- **Поддержка нескольких языков**: Приложение поддерживает перевод между английским, русским и японским языками (в любом направлении).
+
+- **Горячие клавиши**: Предусмотрены глобальные горячие клавиши для основных действий:
+
+  - `Alt+Shift+C` - захват области экрана
+  - `Alt+Shift+W` - захват активного окна
+  - `Alt+Shift+H` - показать/скрыть приложение
+
+- **История переводов**: Все выполненные переводы сохраняются локально с возможностью поиска и фильтрации.
+
+- **Настройки**: Возможность настройки API-провайдера перевода, API-ключей, языков по умолчанию и горячих клавиш.
+
+## Установка
+
+### Зависимости
+
+1. Python 3.8 или выше
+2. Tesseract OCR
+3. Необходимые Python-пакеты (устанавливаются автоматически)
+
+### Установка Tesseract OCR
+
+#### Windows
+
+1. Скачайте установщик Tesseract с [официального сайта](https://github.com/UB-Mannheim/tesseract/wiki)
+2. Запустите установщик и следуйте инструкциям на экране
+3. Убедитесь, что вы установили дополнительные языковые пакеты (English, Russian, Japanese) во время установки
+4. Добавьте путь к Tesseract в PATH или укажите его в настройках приложения
 
 ```bash
-git clone https://github.com/Qlefia/text-translator.git
+# Скрипт для автоматической установки Tesseract (PowerShell)
+$tesseractUrl = "https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-5.0.1.20220118.exe"
+$destination = "$env:TEMP\tesseract-installer.exe"
+Invoke-WebRequest -Uri $tesseractUrl -OutFile $destination
+Start-Process -FilePath $destination -ArgumentList "/S" -Wait
+```
+
+#### Linux (Ubuntu/Debian)
+
+```bash
+# Установка Tesseract и языковых пакетов
+sudo apt update
+sudo apt install -y tesseract-ocr
+sudo apt install -y tesseract-ocr-eng tesseract-ocr-rus tesseract-ocr-jpn
+```
+
+#### MacOS
+
+```bash
+# Установка с помощью Homebrew
+brew install tesseract
+brew install tesseract-lang
+```
+
+### Установка приложения
+
+1. Клонируйте репозиторий:
+
+```bash
+git clone https://github.com/username/text-translator.git
 cd text-translator
 ```
 
-2. Install dependencies:
+2. Установите зависимости:
 
 ```bash
-pip install -r translator/requirements.txt
+pip install -r requirements.txt
 ```
 
-3. Install Tesseract OCR:
-
-- Windows: Download and install from [Tesseract GitHub](https://github.com/UB-Mannheim/tesseract/wiki)
-- Linux: `sudo apt install tesseract-ocr`
-- macOS: `brew install tesseract`
-
-## Usage
-
-1. Run the application:
+3. Запустите приложение:
 
 ```bash
 python -m translator.main
 ```
 
-2. Configure your API keys in the settings tab:
+## Настройка
 
-- OpenAI API key
-- DeepSeek API key
+1. При первом запуске приложения перейдите во вкладку "Настройки"
+2. Укажите API-ключ для OpenAI или DeepSeek
+3. Выберите языки для перевода по умолчанию
+4. Настройте горячие клавиши при необходимости
+5. Укажите путь к Tesseract OCR, если он не был найден автоматически
 
-3. Select your preferred capture mode:
+## Использование
 
-- Window capture
-- Area capture
-- File import
+### Захват области экрана
 
-4. Choose source and target languages
+1. Нажмите `Alt+Shift+C` или выберите пункт "Захват области экрана" во вкладке "Область экрана"
+2. Выделите область экрана мышью
+3. Текст будет автоматически распознан и переведен
 
-5. Start translating!
+### Захват окна
 
-## Development
+1. Нажмите `Alt+Shift+W` или перейдите на вкладку "Захват окна"
+2. Выберите окно из списка
+3. Нажмите "Захватить окно"
+4. Текст будет автоматически распознан и переведен
 
-This project uses Poetry for dependency management and follows modern Python development practices.
+### Работа с изображениями
 
-1. Install Poetry:
+1. Перейдите на вкладку "Файлы"
+2. Загрузите изображение, содержащее текст
+3. Текст будет автоматически распознан и переведен
 
-```bash
-pip install poetry
-```
+## Лицензия
 
-2. Install development dependencies:
-
-```bash
-poetry install
-```
-
-3. Run tests:
-
-```bash
-poetry run pytest
-```
-
-4. Format code:
-
-```bash
-poetry run black .
-poetry run isort .
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
-- [OpenAI API](https://openai.com/blog/openai-api)
-- [DeepSeek](https://deepseek.com)
-- [Catppuccin](https://github.com/catppuccin/catppuccin)
+Проект распространяется под лицензией MIT. Подробности в файле [LICENSE](LICENSE).
