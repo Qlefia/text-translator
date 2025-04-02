@@ -1,0 +1,51 @@
+name: Branch Protection
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  protect-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Protect main branch
+        if: github.ref == 'refs/heads/main'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.updateBranchProtection({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main',
+              required_status_checks: {
+                strict: true,
+                contexts: ['build']
+              },
+              enforce_admins: true,
+              required_pull_request_reviews: {
+                required_approving_review_count: 1
+              },
+              restrictions: null
+            })
+
+      - name: Protect develop branch
+        if: github.ref == 'refs/heads/develop'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.updateBranchProtection({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'develop',
+              required_status_checks: {
+                strict: true,
+                contexts: ['build']
+              },
+              enforce_admins: true,
+              required_pull_request_reviews: {
+                required_approving_review_count: 1
+              },
+              restrictions: null
+            })
