@@ -81,20 +81,20 @@ class WindowCaptureThread(QThread):
             
             # Define languages
             source_lang_map = {
-                "Английский": "en",
-                "Русский": "ru",
-                "Японский": "ja"
+                "English": "en",
+                "Russian": "ru",
+                "Japanese": "ja"
             }
             
             target_lang_map = {
-                "Английский": "en",
-                "Русский": "ru",
-                "Японский": "ja"
+                "English": "en",
+                "Russian": "ru",
+                "Japanese": "ja"
             }
             
             # Get languages from settings
-            source_lang_text = self.settings.value("language/source", "Английский")
-            target_lang_text = self.settings.value("language/target", "Русский")
+            source_lang_text = self.settings.value("language/source", "English")
+            target_lang_text = self.settings.value("language/target", "Russian")
             
             source_lang = source_lang_map.get(source_lang_text, "en")
             target_lang = target_lang_map.get(target_lang_text, "ru")
@@ -175,15 +175,15 @@ class ScreenCaptureTab(QWidget):
         # Source language
         lang_layout.addWidget(QLabel("Source language:"))
         self.source_lang = QComboBox()
-        self.source_lang.addItems(["Английский", "Русский", "Японский"])
-        self.source_lang.setCurrentText(self.settings.value("language/source", "Английский"))
+        self.source_lang.addItems(["English", "Russian", "Japanese"])
+        self.source_lang.setCurrentText(self.settings.value("language/source", "English"))
         lang_layout.addWidget(self.source_lang)
         
         # Target language
         lang_layout.addWidget(QLabel("Target language:"))
         self.target_lang = QComboBox()
-        self.target_lang.addItems(["Русский", "Английский", "Японский"])
-        self.target_lang.setCurrentText(self.settings.value("language/target", "Русский"))
+        self.target_lang.addItems(["Russian", "English", "Japanese"])
+        self.target_lang.setCurrentText(self.settings.value("language/target", "Russian"))
         lang_layout.addWidget(self.target_lang)
         
         # "Results" section
