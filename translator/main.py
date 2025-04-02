@@ -130,8 +130,8 @@ def main():
     """Основная функция для запуска приложения"""
     # Инициализация приложения
     app = QApplication(sys.argv)
-    app.setApplicationName("Translator")
-    app.setApplicationVersion("0.1.0")
+    app.setApplicationName("Translator Pro")
+    app.setApplicationVersion("2.0.0")
     
     # Загрузка или создание настроек
     load_settings()
@@ -145,6 +145,7 @@ def main():
     
     # Создание главного окна
     main_window = MainWindow()
+    main_window.setWindowTitle("Translator Pro 2025")
     main_window.show()
     
     # Запуск цикла событий

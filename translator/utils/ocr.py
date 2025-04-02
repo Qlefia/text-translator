@@ -1,138 +1,195 @@
 """
-Модуль для оптического распознавания текста (OCR)
-с использованием Tesseract OCR
+Модуль для распознавания текста из изображений
 """
 
 import os
+import sys
 import pytesseract
-import cv2
-import numpy as np
-from PIL import Image
-import platform
+import tempfile
+from PIL import Image, ImageEnhance, ImageFilter
 
 class OCREngine:
-    """Класс для работы с OCR"""
+    """Класс для распознавания текста с помощью OCR"""
     
-    def __init__(self, tesseract_path=None):
+    def __init__(self, tesseract_path=""):
         """
         Инициализация OCR движка
         
         Args:
-            tesseract_path: путь к исполняемому файлу Tesseract (для Windows)
+            tesseract_path: путь к исполняемому файлу Tesseract OCR
         """
-        # Определение пути к Tesseract для разных ОС
-        if platform.system() == 'Windows':
-            # Типичный путь для Windows
-            if tesseract_path:
-                pytesseract.pytesseract.tesseract_cmd = tesseract_path
-            else:
-                # Путь по умолчанию
-                default_path = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-                if os.path.exists(default_path):
-                    pytesseract.pytesseract.tesseract_cmd = default_path
-                else:
-                    print("Предупреждение: Tesseract не найден по пути по умолчанию.")
-                    print("Установите Tesseract или укажите путь вручную.")
+        # Установка пути к Tesseract, если он указан
+        if tesseract_path and os.path.exists(tesseract_path):
+            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        
+        # Проверка работоспособности Tesseract
+        self.is_tesseract_available = self._check_tesseract()
+        
+        # Поддерживаемые языки
+        self.supported_languages = {
+            "en": "eng",  # Английский
+            "ru": "rus",  # Русский
+            "ja": "jpn"   # Японский
+        }
     
-    def recognize_text(self, image_path, lang='eng+jpn+rus'):
+    def _check_tesseract(self):
+        """
+        Проверка доступности Tesseract OCR
+        
+        Returns:
+            bool: True, если Tesseract доступен
+        """
+        try:
+            # Проверка версии Tesseract
+            pytesseract.get_tesseract_version()
+            return True
+        except Exception as e:
+            print(f"Ошибка при проверке Tesseract OCR: {e}")
+            return False
+    
+    def preprocess_image(self, image_path):
+        """
+        Предварительная обработка изображения для улучшения OCR
+        
+        Args:
+            image_path: путь к исходному изображению
+        
+        Returns:
+            PIL.Image: обработанное изображение
+        """
+        try:
+            # Открытие изображения
+            image = Image.open(image_path)
+            
+            # Базовое улучшение четкости
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.5)
+            
+            # Увеличение резкости
+            image = image.filter(ImageFilter.SHARPEN)
+            
+            return image
+        except Exception as e:
+            print(f"Ошибка при обработке изображения: {e}")
+            return None
+    
+    def recognize_text(self, image_path, language="en"):
         """
         Распознавание текста из изображения
         
         Args:
-            image_path: путь к файлу изображения
-            lang: языки для распознавания (eng, jpn, rus)
-            
+            image_path: путь к изображению
+            language: язык распознаваемого текста (en, ru, ja)
+        
         Returns:
             str: распознанный текст
         """
+        if not self.is_tesseract_available:
+            return "Ошибка: Tesseract OCR не доступен. Проверьте, установлен ли Tesseract и указан ли корректный путь."
+        
         try:
-            # Загрузка изображения
-            img = cv2.imread(image_path)
-            if img is None:
-                raise ValueError(f"Не удалось загрузить изображение: {image_path}")
-                
-            # Преобразование в оттенки серого
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Предварительная обработка изображения
+            image = self.preprocess_image(image_path)
+            if image is None:
+                return "Ошибка: не удалось обработать изображение."
             
-            # Применение различных методов улучшения изображения
-            # Убираем шум
-            denoise = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+            # Получение кода языка для Tesseract
+            tesseract_lang = self.supported_languages.get(language, "eng")
             
-            # Адаптивная бинаризация для лучшего распознавания текста
-            binary = cv2.adaptiveThreshold(
-                denoise, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                cv2.THRESH_BINARY, 11, 2)
+            # Распознавание текста с использованием Tesseract
+            text = pytesseract.image_to_string(image, lang=tesseract_lang)
             
-            # Распознавание с помощью Tesseract
-            text = pytesseract.image_to_string(binary, lang=lang)
+            # Очистка текста от лишних символов
+            text = text.strip()
             
-            return text.strip()
+            return text if text else "Текст не обнаружен"
         except Exception as e:
-            print(f"Ошибка при распознавании текста: {e}")
-            return ""
+            return f"Ошибка OCR: {str(e)}"
     
-    def recognize_text_from_pil(self, pil_image, lang='eng+jpn+rus'):
+    def recognize_text_from_area(self, image_path, x1, y1, x2, y2, language="en"):
         """
-        Распознавание текста из объекта PIL.Image
+        Распознавание текста из определенной области изображения
         
         Args:
-            pil_image: объект PIL.Image
-            lang: языки для распознавания
-            
+            image_path: путь к изображению
+            x1, y1: координаты верхнего левого угла
+            x2, y2: координаты правого нижнего угла
+            language: язык распознаваемого текста
+        
         Returns:
             str: распознанный текст
         """
+        if not self.is_tesseract_available:
+            return "Ошибка: Tesseract OCR не доступен. Проверьте, установлен ли Tesseract и указан ли корректный путь."
+        
         try:
-            # Преобразование в numpy array и затем в grayscale
-            img = np.array(pil_image)
-            if len(img.shape) == 3:  # если цветное изображение
-                gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-            else:
-                gray = img
-                
-            # Применение улучшений
-            denoise = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-            binary = cv2.adaptiveThreshold(
-                denoise, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                cv2.THRESH_BINARY, 11, 2)
+            # Открытие изображения
+            image = Image.open(image_path)
             
-            # Распознавание
-            text = pytesseract.image_to_string(binary, lang=lang)
+            # Вырезание указанной области
+            area = image.crop((x1, y1, x2, y2))
             
-            return text.strip()
+            # Увеличение контрастности области
+            enhancer = ImageEnhance.Contrast(area)
+            area = enhancer.enhance(1.5)
+            
+            # Увеличение резкости
+            area = area.filter(ImageFilter.SHARPEN)
+            
+            # Получение кода языка для Tesseract
+            tesseract_lang = self.supported_languages.get(language, "eng")
+            
+            # Распознавание текста
+            text = pytesseract.image_to_string(area, lang=tesseract_lang)
+            
+            # Очистка текста
+            text = text.strip()
+            
+            return text if text else "Текст не обнаружен"
         except Exception as e:
-            print(f"Ошибка при распознавании текста: {e}")
-            return ""
+            return f"Ошибка OCR при анализе области: {str(e)}"
     
     def detect_language(self, image_path):
         """
         Определение языка текста на изображении
         
         Args:
-            image_path: путь к файлу изображения
-            
+            image_path: путь к изображению
+        
         Returns:
-            str: код языка (eng, jpn, rus)
+            str: код языка (en, ru, ja или none, если не удалось определить)
         """
+        if not self.is_tesseract_available:
+            print("Ошибка: Tesseract OCR не доступен")
+            return "none"
+        
         try:
-            # Загрузка изображения
-            img = cv2.imread(image_path)
+            # Предварительная обработка изображения
+            image = self.preprocess_image(image_path)
+            if image is None:
+                return "none"
             
-            # Преобразование в оттенки серого
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # Пробуем распознать текст на разных языках и оцениваем результаты
+            results = {}
+            for lang_code, tesseract_code in self.supported_languages.items():
+                try:
+                    # Распознавание с указанием языка
+                    text = pytesseract.image_to_string(image, lang=tesseract_code)
+                    
+                    # Подсчет количества символов
+                    text_len = len(text.strip())
+                    
+                    # Сохранение результата
+                    results[lang_code] = text_len
+                except:
+                    results[lang_code] = 0
             
-            # Получение данных об языке
-            lang_data = pytesseract.image_to_osd(gray)
+            # Определение языка с наибольшим количеством символов
+            if not results:
+                return "none"
             
-            # Анализ данных
-            if 'Script: Japanese' in lang_data:
-                return 'jpn'
-            elif 'Script: Latin' in lang_data:
-                return 'eng'
-            elif 'Script: Cyrillic' in lang_data:
-                return 'rus'
-            else:
-                return 'eng'  # по умолчанию
+            max_lang = max(results, key=results.get)
+            return max_lang if results[max_lang] > 0 else "none"
         except Exception as e:
             print(f"Ошибка при определении языка: {e}")
-            return 'eng'  # по умолчанию 
+            return "none" 

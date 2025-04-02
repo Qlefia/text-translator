@@ -366,30 +366,62 @@ class SettingsTab(QWidget):
     
     def test_api_key(self):
         """Проверка API ключа"""
-        if self.openai_radio.isChecked():
-            api_key = self.openai_api_key.text()
-            base_url = self.openai_base_url.text()
-            provider = "OpenAI"
-        else:
-            api_key = self.deepseek_api_key.text()
-            base_url = self.deepseek_base_url.text()
-            provider = "DeepSeek"
+        try:
+            if self.openai_radio.isChecked():
+                api_key = self.openai_api_key.text()
+                base_url = self.openai_base_url.text()
+                provider = "openai"
+            else:
+                api_key = self.deepseek_api_key.text()
+                base_url = self.deepseek_base_url.text()
+                provider = "deepseek"
+                
+            if not api_key:
+                QMessageBox.warning(
+                    self, 
+                    "Ошибка", 
+                    f"API ключ для {provider} не указан"
+                )
+                return
+                
+            # Инициализируем переводчик
+            import os
+            from translator.models.translator import LLMTranslator
             
-        if not api_key:
-            QMessageBox.warning(
+            # Создание переводчика
+            db_dir = os.path.join(os.path.expanduser("~"), ".translator")
+            if not os.path.exists(db_dir):
+                os.makedirs(db_dir)
+            db_path = os.path.join(db_dir, "translations.db")
+            
+            translator = LLMTranslator(db_path)
+            translator.set_api_key(provider, api_key, base_url)
+            
+            # Тестовый запрос
+            test_text = "Hello world"
+            source_lang = "en"
+            target_lang = "ru"
+            
+            result = translator.translate(test_text, source_lang, target_lang, provider)
+            
+            if result and result != f"Ошибка перевода:":
+                QMessageBox.information(
+                    self, 
+                    "Успех", 
+                    f"API ключ работает корректно!\n\nТестовый перевод:\n{test_text} → {result}"
+                )
+            else:
+                QMessageBox.warning(
+                    self, 
+                    "Ошибка", 
+                    f"Не удалось выполнить тестовый перевод. Проверьте правильность API ключа и URL."
+                )
+        except Exception as e:
+            QMessageBox.critical(
                 self, 
                 "Ошибка", 
-                f"API ключ для {provider} не указан"
+                f"Ошибка при проверке API ключа: {e}"
             )
-            return
-            
-        # Здесь должна быть проверка API ключа через запрос
-        # В данном примере просто показываем сообщение
-        QMessageBox.information(
-            self, 
-            "Информация", 
-            f"Проверка ключа {provider} будет реализована в следующей версии"
-        )
     
     def clear_history(self):
         """Очистка истории переводов"""
