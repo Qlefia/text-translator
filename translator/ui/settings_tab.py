@@ -1,5 +1,5 @@
 """
-Вкладка настроек приложения
+Settings tab for the application
 """
 
 import os
@@ -7,12 +7,12 @@ import json
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
     QComboBox, QLineEdit, QTabWidget, QGroupBox, QRadioButton,
-    QCheckBox, QFormLayout, QScrollArea, QMessageBox
+    QCheckBox, QFormLayout, QScrollArea, QMessageBox, QFileDialog
 )
 from PyQt5.QtCore import Qt, QSettings
 
 class SettingsTab(QWidget):
-    """Вкладка настроек приложения"""
+    """Settings tab for the application"""
     
     def __init__(self):
         """Инициализация вкладки настроек"""
@@ -30,24 +30,24 @@ class SettingsTab(QWidget):
         main_layout.addWidget(self.settings_tabs)
         
         # Добавление вкладок для разных групп настроек
-        self.settings_tabs.addTab(self.create_api_tab(), "API и переводчики")
-        self.settings_tabs.addTab(self.create_language_tab(), "Языки")
-        self.settings_tabs.addTab(self.create_hotkeys_tab(), "Горячие клавиши")
-        self.settings_tabs.addTab(self.create_appearance_tab(), "Внешний вид")
-        self.settings_tabs.addTab(self.create_ocr_tab(), "OCR и распознавание")
-        self.settings_tabs.addTab(self.create_other_tab(), "Прочие настройки")
+        self.settings_tabs.addTab(self.create_api_tab(), "API and translators")
+        self.settings_tabs.addTab(self.create_language_tab(), "Languages")
+        self.settings_tabs.addTab(self.create_hotkeys_tab(), "Hotkeys")
+        self.settings_tabs.addTab(self.create_appearance_tab(), "Appearance")
+        self.settings_tabs.addTab(self.create_ocr_tab(), "OCR and recognition")
+        self.settings_tabs.addTab(self.create_other_tab(), "Other settings")
         
         # Кнопки для сохранения/отмены
         button_layout = QHBoxLayout()
         main_layout.addLayout(button_layout)
         
         # Кнопка для сохранения настроек
-        self.save_button = QPushButton("Сохранить настройки")
+        self.save_button = QPushButton("Save settings")
         self.save_button.clicked.connect(self.save_settings)
         button_layout.addWidget(self.save_button)
         
         # Кнопка для отмены изменений
-        self.cancel_button = QPushButton("Отменить изменения")
+        self.cancel_button = QPushButton("Cancel changes")
         self.cancel_button.clicked.connect(self.load_settings)
         button_layout.addWidget(self.cancel_button)
         
@@ -66,7 +66,7 @@ class SettingsTab(QWidget):
         api_widget.setLayout(api_layout)
         
         # Выбор провайдера перевода
-        provider_group = QGroupBox("Провайдер перевода")
+        provider_group = QGroupBox("Translator provider")
         provider_layout = QVBoxLayout()
         provider_group.setLayout(provider_layout)
         
@@ -77,38 +77,38 @@ class SettingsTab(QWidget):
         provider_layout.addWidget(self.deepseek_radio)
         
         # Группа настроек для OpenAI
-        openai_group = QGroupBox("Настройки OpenAI")
+        openai_group = QGroupBox("OpenAI settings")
         openai_layout = QFormLayout()
         openai_group.setLayout(openai_layout)
         
         self.openai_api_key = QLineEdit()
         self.openai_api_key.setEchoMode(QLineEdit.Password)  # Скрытие ключа
-        openai_layout.addRow("API ключ:", self.openai_api_key)
+        openai_layout.addRow("API key:", self.openai_api_key)
         
         self.openai_base_url = QLineEdit()
         self.openai_base_url.setText("https://api.openai.com/v1")
-        openai_layout.addRow("Базовый URL:", self.openai_base_url)
+        openai_layout.addRow("Base URL:", self.openai_base_url)
         
         self.openai_model = QComboBox()
         self.openai_model.addItems(["gpt-4", "gpt-3.5-turbo"])
-        openai_layout.addRow("Модель:", self.openai_model)
+        openai_layout.addRow("Model:", self.openai_model)
         
         # Группа настроек для DeepSeek
-        deepseek_group = QGroupBox("Настройки DeepSeek")
+        deepseek_group = QGroupBox("DeepSeek settings")
         deepseek_layout = QFormLayout()
         deepseek_group.setLayout(deepseek_layout)
         
         self.deepseek_api_key = QLineEdit()
         self.deepseek_api_key.setEchoMode(QLineEdit.Password)  # Скрытие ключа
-        deepseek_layout.addRow("API ключ:", self.deepseek_api_key)
+        deepseek_layout.addRow("API key:", self.deepseek_api_key)
         
         self.deepseek_base_url = QLineEdit()
         self.deepseek_base_url.setText("https://api.aiguoguo199.com/v1")
-        deepseek_layout.addRow("Базовый URL:", self.deepseek_base_url)
+        deepseek_layout.addRow("Base URL:", self.deepseek_base_url)
         
         self.deepseek_model = QComboBox()
         self.deepseek_model.addItems(["deepseek-chat"])
-        deepseek_layout.addRow("Модель:", self.deepseek_model)
+        deepseek_layout.addRow("Model:", self.deepseek_model)
         
         # Добавление групп на вкладку
         api_layout.addWidget(provider_group)
@@ -116,7 +116,7 @@ class SettingsTab(QWidget):
         api_layout.addWidget(deepseek_group)
         
         # Кнопка проверки API ключа
-        test_button = QPushButton("Проверить API ключ")
+        test_button = QPushButton("Test API key")
         test_button.clicked.connect(self.test_api_key)
         api_layout.addWidget(test_button)
         
@@ -136,29 +136,29 @@ class SettingsTab(QWidget):
         language_widget.setLayout(language_layout)
         
         # Группа для языка интерфейса
-        ui_lang_group = QGroupBox("Язык интерфейса")
+        ui_lang_group = QGroupBox("Interface language")
         ui_lang_layout = QVBoxLayout()
         ui_lang_group.setLayout(ui_lang_layout)
         
         self.ui_language = QComboBox()
-        self.ui_language.addItems(["Русский", "English"])
+        self.ui_language.addItems(["Russian", "English"])
         ui_lang_layout.addWidget(self.ui_language)
         
         # Группа для языков перевода по умолчанию
-        default_langs_group = QGroupBox("Языки перевода по умолчанию")
+        default_langs_group = QGroupBox("Default translation languages")
         default_langs_layout = QFormLayout()
         default_langs_group.setLayout(default_langs_layout)
         
         self.source_language = QComboBox()
-        self.source_language.addItems(["Английский", "Японский", "Русский"])
-        default_langs_layout.addRow("Язык источника:", self.source_language)
+        self.source_language.addItems(["English", "Japanese", "Russian"])
+        default_langs_layout.addRow("Source language:", self.source_language)
         
         self.target_language = QComboBox()
-        self.target_language.addItems(["Русский", "Английский", "Японский"])
-        default_langs_layout.addRow("Язык перевода:", self.target_language)
+        self.target_language.addItems(["Russian", "English", "Japanese"])
+        default_langs_layout.addRow("Translation language:", self.target_language)
         
         # Дополнительные настройки
-        autodect_check = QCheckBox("Автоопределение языка исходного текста")
+        autodect_check = QCheckBox("Automatic language detection of the source text")
         autodect_check.setChecked(True)
         
         # Добавление групп на вкладку
@@ -182,22 +182,22 @@ class SettingsTab(QWidget):
         
         # Поля для горячих клавиш
         self.area_capture_hotkey = QLineEdit("Alt+Shift+C")
-        hotkeys_layout.addRow("Захват области экрана:", self.area_capture_hotkey)
+        hotkeys_layout.addRow("Screen capture:", self.area_capture_hotkey)
         
         self.window_capture_hotkey = QLineEdit("Alt+Shift+W")
-        hotkeys_layout.addRow("Захват окна:", self.window_capture_hotkey)
+        hotkeys_layout.addRow("Window capture:", self.window_capture_hotkey)
         
         self.show_hide_hotkey = QLineEdit("Alt+Shift+H")
-        hotkeys_layout.addRow("Показать/скрыть приложение:", self.show_hide_hotkey)
+        hotkeys_layout.addRow("Show/hide application:", self.show_hide_hotkey)
         
         self.close_overlay_hotkey = QLineEdit("Alt+Shift+X")
-        hotkeys_layout.addRow("Закрыть оверлей:", self.close_overlay_hotkey)
+        hotkeys_layout.addRow("Close overlay:", self.close_overlay_hotkey)
         
         self.copy_translation_hotkey = QLineEdit("Ctrl+C")
-        hotkeys_layout.addRow("Копировать перевод:", self.copy_translation_hotkey)
+        hotkeys_layout.addRow("Copy translation:", self.copy_translation_hotkey)
         
         # Предупреждение
-        warning_label = QLabel("Примечание: изменение горячих клавиш требует перезапуска приложения.")
+        warning_label = QLabel("Note: changing hotkeys requires application restart.")
         warning_label.setWordWrap(True)
         hotkeys_layout.addRow(warning_label)
         
@@ -215,33 +215,33 @@ class SettingsTab(QWidget):
         appearance_widget.setLayout(appearance_layout)
         
         # Выбор темы
-        theme_group = QGroupBox("Тема оформления")
+        theme_group = QGroupBox("Theme")
         theme_layout = QVBoxLayout()
         theme_group.setLayout(theme_layout)
         
         self.theme_combo = QComboBox()
-        self.theme_combo.addItems(["Mocha (темная)", "Latte (светлая)", "Frappe", "Macchiato"])
+        self.theme_combo.addItems(["Mocha (dark)", "Latte (light)", "Frappe", "Macchiato"])
         theme_layout.addWidget(self.theme_combo)
         
         # Настройки оверлея
-        overlay_group = QGroupBox("Настройки оверлея перевода")
+        overlay_group = QGroupBox("Translation overlay settings")
         overlay_layout = QFormLayout()
         overlay_group.setLayout(overlay_layout)
         
         self.overlay_transparency = QComboBox()
         self.overlay_transparency.addItems(["10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%"])
         self.overlay_transparency.setCurrentText("30%")
-        overlay_layout.addRow("Прозрачность фона:", self.overlay_transparency)
+        overlay_layout.addRow("Background transparency:", self.overlay_transparency)
         
         self.overlay_duration = QComboBox()
-        self.overlay_duration.addItems(["3 секунды", "5 секунд", "10 секунд", "15 секунд", "Бесконечно"])
-        overlay_layout.addRow("Длительность показа:", self.overlay_duration)
+        self.overlay_duration.addItems(["3 seconds", "5 seconds", "10 seconds", "15 seconds", "Infinite"])
+        overlay_layout.addRow("Display duration:", self.overlay_duration)
         
         # Дополнительные опции
-        self.show_animations = QCheckBox("Показывать анимации")
+        self.show_animations = QCheckBox("Show animations")
         self.show_animations.setChecked(True)
         
-        self.rounded_corners = QCheckBox("Скругленные углы интерфейса")
+        self.rounded_corners = QCheckBox("Rounded interface corners")
         self.rounded_corners.setChecked(True)
         
         # Добавление групп на вкладку
@@ -265,7 +265,7 @@ class SettingsTab(QWidget):
         ocr_widget.setLayout(ocr_layout)
         
         # Выбор OCR движка
-        engine_group = QGroupBox("OCR движок")
+        engine_group = QGroupBox("OCR engine")
         engine_layout = QVBoxLayout()
         engine_group.setLayout(engine_layout)
         
@@ -274,7 +274,7 @@ class SettingsTab(QWidget):
         engine_layout.addWidget(self.ocr_engine)
         
         # Путь к Tesseract
-        tesseract_group = QGroupBox("Настройки Tesseract OCR")
+        tesseract_group = QGroupBox("Tesseract OCR settings")
         tesseract_layout = QFormLayout()
         tesseract_group.setLayout(tesseract_layout)
         
@@ -284,23 +284,23 @@ class SettingsTab(QWidget):
         
         path_layout = QHBoxLayout()
         path_layout.addWidget(self.tesseract_path)
-        browse_button = QPushButton("Обзор")
+        browse_button = QPushButton("Browse")
         browse_button.clicked.connect(self.browse_tesseract)
         path_layout.addWidget(browse_button)
-        tesseract_layout.addRow("Путь к Tesseract:", path_layout)
+        tesseract_layout.addRow("Tesseract path:", path_layout)
         
         # Настройки реального времени
-        realtime_group = QGroupBox("Режим реального времени")
+        realtime_group = QGroupBox("Real-time mode")
         realtime_layout = QFormLayout()
         realtime_group.setLayout(realtime_layout)
         
         self.update_interval = QComboBox()
-        self.update_interval.addItems(["0.5 секунд", "1 секунда", "2 секунды", "3 секунды", "5 секунд"])
-        realtime_layout.addRow("Интервал обновления:", self.update_interval)
+        self.update_interval.addItems(["0.5 seconds", "1 second", "2 seconds", "3 seconds", "5 seconds"])
+        realtime_layout.addRow("Update interval:", self.update_interval)
         
         self.max_duration = QComboBox()
-        self.max_duration.addItems(["30 секунд", "1 минута", "2 минуты", "5 минут", "Бесконечно"])
-        realtime_layout.addRow("Максимальная длительность:", self.max_duration)
+        self.max_duration.addItems(["30 seconds", "1 minute", "2 minutes", "5 minutes", "Infinite"])
+        realtime_layout.addRow("Maximum duration:", self.max_duration)
         
         # Добавление групп на вкладку
         ocr_layout.addWidget(engine_group)
@@ -322,31 +322,31 @@ class SettingsTab(QWidget):
         other_widget.setLayout(other_layout)
         
         # Автозапуск
-        self.autostart = QCheckBox("Запускать при старте системы")
+        self.autostart = QCheckBox("Start with system startup")
         other_layout.addWidget(self.autostart)
         
         # Сворачивание в трей
-        self.minimize_to_tray = QCheckBox("Сворачивать в трей вместо закрытия")
+        self.minimize_to_tray = QCheckBox("Minimize to tray instead of closing")
         self.minimize_to_tray.setChecked(True)
         other_layout.addWidget(self.minimize_to_tray)
         
         # Подтверждение перед выходом
-        self.confirm_exit = QCheckBox("Подтверждать выход из приложения")
+        self.confirm_exit = QCheckBox("Confirm exit from application")
         self.confirm_exit.setChecked(True)
         other_layout.addWidget(self.confirm_exit)
         
         # Логирование ошибок
-        self.error_logging = QCheckBox("Включить логирование ошибок")
+        self.error_logging = QCheckBox("Enable error logging")
         self.error_logging.setChecked(True)
         other_layout.addWidget(self.error_logging)
         
         # Очистка истории
-        clear_history_button = QPushButton("Очистить историю переводов")
+        clear_history_button = QPushButton("Clear translation history")
         clear_history_button.clicked.connect(self.clear_history)
         other_layout.addWidget(clear_history_button)
         
         # Версия
-        version_label = QLabel("Версия приложения: 0.1.0")
+        version_label = QLabel("Application version: 0.1.0")
         other_layout.addWidget(version_label)
         
         other_layout.addStretch()
@@ -357,7 +357,7 @@ class SettingsTab(QWidget):
         """Открытие диалога выбора пути к Tesseract"""
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
-            "Выберите исполняемый файл Tesseract", 
+            "Select Tesseract executable", 
             "", 
             "Executable (*.exe);;All Files (*)"
         )
@@ -379,8 +379,8 @@ class SettingsTab(QWidget):
             if not api_key:
                 QMessageBox.warning(
                     self, 
-                    "Ошибка", 
-                    f"API ключ для {provider} не указан"
+                    "Error", 
+                    f"API key for {provider} not specified"
                 )
                 return
                 
@@ -404,31 +404,31 @@ class SettingsTab(QWidget):
             
             result = translator.translate(test_text, source_lang, target_lang, provider)
             
-            if result and result != f"Ошибка перевода:":
+            if result and result != f"Translation error:":
                 QMessageBox.information(
                     self, 
-                    "Успех", 
-                    f"API ключ работает корректно!\n\nТестовый перевод:\n{test_text} → {result}"
+                    "Success", 
+                    f"API key works correctly!\n\nTest translation:\n{test_text} → {result}"
                 )
             else:
                 QMessageBox.warning(
                     self, 
-                    "Ошибка", 
-                    f"Не удалось выполнить тестовый перевод. Проверьте правильность API ключа и URL."
+                    "Error", 
+                    f"Failed to perform test translation. Check API key and URL."
                 )
         except Exception as e:
             QMessageBox.critical(
                 self, 
-                "Ошибка", 
-                f"Ошибка при проверке API ключа: {e}"
+                "Error", 
+                f"Error checking API key: {e}"
             )
     
     def clear_history(self):
         """Очистка истории переводов"""
         reply = QMessageBox.question(
             self, 
-            "Подтверждение", 
-            "Вы уверены, что хотите очистить всю историю переводов?",
+            "Confirmation", 
+            "Are you sure you want to clear all translation history?",
             QMessageBox.Yes | QMessageBox.No, 
             QMessageBox.No
         )
@@ -437,8 +437,8 @@ class SettingsTab(QWidget):
             # Здесь должна быть реальная очистка истории
             QMessageBox.information(
                 self, 
-                "Информация", 
-                "История переводов очищена"
+                "Information", 
+                "Translation history cleared"
             )
     
     def save_settings(self):
@@ -488,8 +488,8 @@ class SettingsTab(QWidget):
         
         QMessageBox.information(
             self, 
-            "Информация", 
-            "Настройки успешно сохранены"
+            "Information", 
+            "Settings saved successfully"
         )
     
     def load_settings(self):
@@ -511,9 +511,9 @@ class SettingsTab(QWidget):
         self.deepseek_model.setCurrentText(self.settings.value("deepseek/model", "deepseek-chat"))
         
         # Языки
-        self.ui_language.setCurrentText(self.settings.value("language/ui", "Русский"))
-        self.source_language.setCurrentText(self.settings.value("language/source", "Английский"))
-        self.target_language.setCurrentText(self.settings.value("language/target", "Русский"))
+        self.ui_language.setCurrentText(self.settings.value("language/ui", "Russian"))
+        self.source_language.setCurrentText(self.settings.value("language/source", "English"))
+        self.target_language.setCurrentText(self.settings.value("language/target", "Russian"))
         
         # Горячие клавиши
         self.area_capture_hotkey.setText(self.settings.value("hotkeys/area_capture", "Alt+Shift+C"))
@@ -523,9 +523,9 @@ class SettingsTab(QWidget):
         self.copy_translation_hotkey.setText(self.settings.value("hotkeys/copy_translation", "Ctrl+C"))
         
         # Внешний вид
-        self.theme_combo.setCurrentText(self.settings.value("appearance/theme", "Mocha (темная)"))
+        self.theme_combo.setCurrentText(self.settings.value("appearance/theme", "Mocha (dark)"))
         self.overlay_transparency.setCurrentText(self.settings.value("appearance/overlay_transparency", "30%"))
-        self.overlay_duration.setCurrentText(self.settings.value("appearance/overlay_duration", "5 секунд"))
+        self.overlay_duration.setCurrentText(self.settings.value("appearance/overlay_duration", "5 seconds"))
         self.show_animations.setChecked(self.settings.value("appearance/show_animations", True, type=bool))
         self.rounded_corners.setChecked(self.settings.value("appearance/rounded_corners", True, type=bool))
         
@@ -537,8 +537,8 @@ class SettingsTab(QWidget):
             default_tesseract_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         
         self.tesseract_path.setText(self.settings.value("ocr/tesseract_path", default_tesseract_path))
-        self.update_interval.setCurrentText(self.settings.value("ocr/update_interval", "1 секунда"))
-        self.max_duration.setCurrentText(self.settings.value("ocr/max_duration", "1 минута"))
+        self.update_interval.setCurrentText(self.settings.value("ocr/update_interval", "1 second"))
+        self.max_duration.setCurrentText(self.settings.value("ocr/max_duration", "1 minute"))
         
         # Прочие
         self.autostart.setChecked(self.settings.value("other/autostart", False, type=bool))

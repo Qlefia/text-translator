@@ -1,5 +1,5 @@
 """
-Вкладка захвата окна приложения
+Tab for capturing application windows
 """
 
 import os
@@ -7,7 +7,8 @@ import sys
 import time
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
-    QListWidget, QListWidgetItem, QComboBox, QTextEdit, QGroupBox
+    QListWidget, QListWidgetItem, QComboBox, QTextEdit, QGroupBox,
+    QApplication
 )
 from PyQt5.QtCore import Qt, QSettings, QTimer, pyqtSignal, QThread
 from PyQt5.QtGui import QPixmap, QImage, QColor, QPainter
@@ -18,7 +19,7 @@ from translator.models.translator import LLMTranslator
 from translator.utils.window_manager import WindowManager
 
 class WindowCaptureThread(QThread):
-    """Поток для захвата окна и выполнения OCR + перевода"""
+    """Thread for window capture and OCR + translation"""
     result_ready = pyqtSignal(str, str)
     preview_ready = pyqtSignal(QPixmap)
     
@@ -30,7 +31,7 @@ class WindowCaptureThread(QThread):
         self.ocr = OCREngine(settings.value("ocr/tesseract_path", ""))
         self.window_manager = WindowManager()
         
-        # Создание переводчика
+        # Create translator
         db_dir = os.path.join(os.path.expanduser("~"), ".translator")
         if not os.path.exists(db_dir):
             os.makedirs(db_dir)
@@ -38,7 +39,7 @@ class WindowCaptureThread(QThread):
         
         self.translator = LLMTranslator(db_path)
         
-        # Настройка API ключей
+        # Set up API keys
         provider = self.settings.value("translator/provider", "openai")
         
         if provider == "openai":
@@ -55,30 +56,30 @@ class WindowCaptureThread(QThread):
         self.translator.set_default_provider(provider)
     
     def run(self):
-        # Захват окна
+        # Window capture
         try:
-            # Получение текущего списка окон
+            # Get current window list
             self.window_manager.get_window_list()
             
-            # Получение координат окна для захвата
+            # Get coordinates of the window to capture
             window_rect = self.window_manager.capture_window(self.window_title)
             
             if window_rect:
-                # Захват указанной области
+                # Capture the specified area
                 x, y, width, height = window_rect
                 screenshot_path = self.screenshot.capture_area(x, y, x + width, y + height)
             else:
-                # Fallback: использовать захват всего экрана
+                # Fallback: use fullscreen capture
                 screenshot_path = self.screenshot.capture_fullscreen()
             
-            # Отправляем превью
+            # Send preview
             pixmap = QPixmap(screenshot_path)
             self.preview_ready.emit(pixmap)
             
             # OCR
             text = self.ocr.recognize_text(screenshot_path)
             
-            # Определение языков
+            # Define languages
             source_lang_map = {
                 "Английский": "en",
                 "Русский": "ru",
@@ -91,148 +92,148 @@ class WindowCaptureThread(QThread):
                 "Японский": "ja"
             }
             
-            # Получение языков из настроек
+            # Get languages from settings
             source_lang_text = self.settings.value("language/source", "Английский")
             target_lang_text = self.settings.value("language/target", "Русский")
             
             source_lang = source_lang_map.get(source_lang_text, "en")
             target_lang = target_lang_map.get(target_lang_text, "ru")
             
-            # Перевод
+            # Translation
             translated = self.translator.translate(
                 text, source_lang, target_lang, 
                 self.settings.value("translator/provider", "openai")
             )
             
-            # Отправка результатов
+            # Send results
             self.result_ready.emit(text, translated)
             
         except Exception as e:
-            self.result_ready.emit("Ошибка при обработке окна", str(e))
+            self.result_ready.emit("Error processing window", str(e))
 
 class ScreenCaptureTab(QWidget):
-    """Вкладка захвата окна"""
+    """Window capture tab"""
     
     def __init__(self):
-        """Инициализация вкладки захвата окна"""
+        """Initialize the window capture tab"""
         super().__init__()
         
-        # Загрузка настроек
+        # Load settings
         self.settings = QSettings("TranslatorApp", "Translator")
         
-        # Создание интерфейса
+        # Create UI
         self.init_ui()
         
-        # Инициализация объектов для работы с окнами
+        # Initialize objects for working with windows
         self.window_manager = WindowManager()
         self.capture_thread = None
         
-        # Обновление списка окон при запуске
+        # Update window list on startup
         self.update_window_list()
     
     def init_ui(self):
-        """Инициализация интерфейса"""
+        """Initialize the interface"""
         layout = QVBoxLayout()
         self.setLayout(layout)
         
-        # Секция "Выбор окна"
-        window_group = QGroupBox("Выбор окна")
+        # "Window Selection" section
+        window_group = QGroupBox("Window Selection")
         window_layout = QVBoxLayout()
         window_group.setLayout(window_layout)
         
-        # Список доступных окон
-        window_layout.addWidget(QLabel("Доступные окна:"))
+        # List of available windows
+        window_layout.addWidget(QLabel("Available windows:"))
         self.window_list = QListWidget()
         window_layout.addWidget(self.window_list)
         
-        # Кнопка обновления списка
-        refresh_button = QPushButton("Обновить список")
+        # Refresh button
+        refresh_button = QPushButton("Refresh List")
         refresh_button.clicked.connect(self.update_window_list)
         window_layout.addWidget(refresh_button)
         
-        # Кнопка захвата
-        capture_button = QPushButton("Захватить окно")
+        # Capture button
+        capture_button = QPushButton("Capture Window")
         capture_button.clicked.connect(self.capture_window)
         window_layout.addWidget(capture_button)
         
-        # Секция "Предпросмотр"
-        preview_group = QGroupBox("Предпросмотр")
+        # "Preview" section
+        preview_group = QGroupBox("Preview")
         preview_layout = QVBoxLayout()
         preview_group.setLayout(preview_layout)
         
         self.preview_label = QLabel()
         self.preview_label.setAlignment(Qt.AlignCenter)
         self.preview_label.setMinimumHeight(200)
-        self.preview_label.setText("Предпросмотр появится здесь...")
+        self.preview_label.setText("Preview will appear here...")
         preview_layout.addWidget(self.preview_label)
         
-        # Секция "Язык оригинала и перевода"
-        lang_group = QGroupBox("Языки")
+        # "Language" section
+        lang_group = QGroupBox("Languages")
         lang_layout = QHBoxLayout()
         lang_group.setLayout(lang_layout)
         
-        # Язык оригинала
-        lang_layout.addWidget(QLabel("Язык оригинала:"))
+        # Source language
+        lang_layout.addWidget(QLabel("Source language:"))
         self.source_lang = QComboBox()
         self.source_lang.addItems(["Английский", "Русский", "Японский"])
         self.source_lang.setCurrentText(self.settings.value("language/source", "Английский"))
         lang_layout.addWidget(self.source_lang)
         
-        # Язык перевода
-        lang_layout.addWidget(QLabel("Язык перевода:"))
+        # Target language
+        lang_layout.addWidget(QLabel("Target language:"))
         self.target_lang = QComboBox()
         self.target_lang.addItems(["Русский", "Английский", "Японский"])
         self.target_lang.setCurrentText(self.settings.value("language/target", "Русский"))
         lang_layout.addWidget(self.target_lang)
         
-        # Секция "Результаты"
-        results_group = QGroupBox("Результаты")
+        # "Results" section
+        results_group = QGroupBox("Results")
         results_layout = QVBoxLayout()
         results_group.setLayout(results_layout)
         
-        # Оригинальный текст
-        results_layout.addWidget(QLabel("Оригинальный текст:"))
+        # Original text
+        results_layout.addWidget(QLabel("Original text:"))
         self.original_text = QTextEdit()
         self.original_text.setReadOnly(True)
-        self.original_text.setPlaceholderText("Оригинальный текст появится здесь...")
+        self.original_text.setPlaceholderText("Original text will appear here...")
         results_layout.addWidget(self.original_text)
         
-        # Переведенный текст
-        results_layout.addWidget(QLabel("Перевод:"))
+        # Translated text
+        results_layout.addWidget(QLabel("Translation:"))
         self.translated_text = QTextEdit()
         self.translated_text.setReadOnly(True)
-        self.translated_text.setPlaceholderText("Перевод появится здесь...")
+        self.translated_text.setPlaceholderText("Translation will appear here...")
         results_layout.addWidget(self.translated_text)
         
-        # Кнопки действий с переводом
+        # Action buttons
         actions_layout = QHBoxLayout()
         
-        copy_button = QPushButton("Копировать перевод")
+        copy_button = QPushButton("Copy Translation")
         copy_button.clicked.connect(self.copy_translation)
         actions_layout.addWidget(copy_button)
         
-        overlay_button = QPushButton("Показать в оверлее")
+        overlay_button = QPushButton("Show in Overlay")
         overlay_button.clicked.connect(self.show_overlay)
         actions_layout.addWidget(overlay_button)
         
         results_layout.addLayout(actions_layout)
         
-        # Добавление всех секций в основной лейаут
+        # Add all sections to the main layout
         layout.addWidget(window_group)
         layout.addWidget(preview_group)
         layout.addWidget(lang_group)
         layout.addWidget(results_group)
     
     def update_window_list(self):
-        """Обновление списка доступных окон"""
-        # Очистка списка
+        """Update the list of available windows"""
+        # Clear the list
         self.window_list.clear()
         
         try:
-            # Получение списка реальных окон
+            # Get the list of real windows
             windows = self.window_manager.get_window_list()
             
-            # Если список пуст или возникла ошибка, добавляем примеры для демонстрации
+            # If the list is empty or an error occurred, add examples for demonstration
             if not windows:
                 sample_windows = [
                     "python",
@@ -248,41 +249,41 @@ class ScreenCaptureTab(QWidget):
                 for window in sample_windows:
                     self.window_list.addItem(window)
             else:
-                # Добавление реальных окон в список
+                # Add real windows to the list
                 for window in windows:
                     self.window_list.addItem(window)
         except Exception as e:
-            # В случае ошибки показываем сообщение
-            self.window_list.addItem(f"Ошибка получения списка окон: {e}")
-            self.window_list.addItem("Установите необходимые библиотеки: pip install pywin32 psutil")
+            # In case of error, show a message
+            self.window_list.addItem(f"Error getting window list: {e}")
+            self.window_list.addItem("Install required libraries: pip install pywin32 psutil")
     
     def capture_window(self):
-        """Захват выбранного окна"""
-        # Проверяем, выбрано ли окно
+        """Capture the selected window"""
+        # Check if a window is selected
         selected_items = self.window_list.selectedItems()
         if not selected_items:
-            self.original_text.setText("Ошибка: не выбрано окно для захвата")
+            self.original_text.setText("Error: no window selected for capture")
             return
         
         window_title = selected_items[0].text()
         
-        # Обновление значений языков в настройках
+        # Update language values in settings
         self.settings.setValue("language/source", self.source_lang.currentText())
         self.settings.setValue("language/target", self.target_lang.currentText())
         
-        # Создаем и запускаем поток захвата
+        # Create and start the capture thread
         self.capture_thread = WindowCaptureThread(window_title, self.settings)
         self.capture_thread.result_ready.connect(self.on_result_ready)
         self.capture_thread.preview_ready.connect(self.on_preview_ready)
         self.capture_thread.start()
         
-        # Показываем сообщение о процессе
-        self.original_text.setText("Захват окна и распознавание текста...")
-        self.translated_text.setText("Пожалуйста, подождите...")
+        # Show process message
+        self.original_text.setText("Capturing window and recognizing text...")
+        self.translated_text.setText("Please wait...")
     
     def on_preview_ready(self, pixmap):
-        """Обработка готового предпросмотра"""
-        # Масштабируем изображение, чтобы оно вписалось в размер метки
+        """Handle the ready preview"""
+        # Scale the image to fit the label size
         scaled_pixmap = pixmap.scaled(
             self.preview_label.width(), self.preview_label.height(),
             Qt.KeepAspectRatio, Qt.SmoothTransformation
@@ -290,29 +291,29 @@ class ScreenCaptureTab(QWidget):
         self.preview_label.setPixmap(scaled_pixmap)
     
     def on_result_ready(self, original, translated):
-        """Обработка результатов распознавания и перевода"""
+        """Handle the recognition and translation results"""
         self.original_text.setText(original)
         self.translated_text.setText(translated)
     
     def copy_translation(self):
-        """Копирование перевода в буфер обмена"""
+        """Copy translation to clipboard"""
         text = self.translated_text.toPlainText()
-        if text and text != "Пожалуйста, подождите...":
+        if text and text != "Please wait...":
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
             
-            # Визуальная индикация, что текст скопирован
+            # Visual indication that text was copied
             original_color = self.translated_text.styleSheet()
             self.translated_text.setStyleSheet("background-color: #505050;")
             QTimer.singleShot(200, lambda: self.translated_text.setStyleSheet(original_color))
     
     def show_overlay(self):
-        """Показ перевода в оверлее поверх окна"""
-        # В будущей версии здесь будет код для отображения оверлея
-        # Сейчас просто показываем сообщение
+        """Show translation in overlay above the window"""
+        # In future version, there will be code for displaying overlay
+        # Now just show a message
         original_color = self.translated_text.styleSheet()
         self.translated_text.setStyleSheet("background-color: #505050;")
         self.translated_text.setText(
-            self.translated_text.toPlainText() + "\n\n(Отображение оверлея будет доступно в следующей версии)"
+            self.translated_text.toPlainText() + "\n\n(Overlay display will be available in the next version)"
         )
         QTimer.singleShot(200, lambda: self.translated_text.setStyleSheet(original_color)) 
