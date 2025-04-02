@@ -6,6 +6,12 @@ on:
       - main
       - develop
 
+permissions:
+  # Needed for branch protection
+  contents: write
+  pull-requests: write
+  repository-projects: write
+
 jobs:
   protect-branches:
     runs-on: ubuntu-latest
@@ -14,38 +20,53 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.repos.updateBranchProtection({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: 'main',
-              required_status_checks: {
-                strict: true,
-                contexts: ['build']
-              },
-              enforce_admins: true,
-              required_pull_request_reviews: {
-                required_approving_review_count: 1
-              },
-              restrictions: null
-            })
+            try {
+              await github.rest.repos.updateBranchProtection({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: 'main',
+                required_status_checks: {
+                  strict: true,
+                  contexts: ['build']
+                },
+                enforce_admins: true,
+                required_pull_request_reviews: {
+                  required_approving_review_count: 1
+                },
+                restrictions: null
+              });
+              console.log('Main branch protected successfully');
+            } catch (error) {
+              console.log('Error protecting main branch:', error);
+              // Don't fail the workflow if branch protection fails
+              // This allows repos without proper permissions to still build
+            }
 
       - name: Protect develop branch
         if: github.ref == 'refs/heads/develop'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.repos.updateBranchProtection({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: 'develop',
-              required_status_checks: {
-                strict: true,
-                contexts: ['build']
-              },
-              enforce_admins: true,
-              required_pull_request_reviews: {
-                required_approving_review_count: 1
-              },
-              restrictions: null
-            })
+            try {
+              await github.rest.repos.updateBranchProtection({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: 'develop',
+                required_status_checks: {
+                  strict: true,
+                  contexts: ['build']
+                },
+                enforce_admins: true,
+                required_pull_request_reviews: {
+                  required_approving_review_count: 1
+                },
+                restrictions: null
+              });
+              console.log('Develop branch protected successfully');
+            } catch (error) {
+              console.log('Error protecting develop branch:', error);
+              // Don't fail the workflow if branch protection fails
+            }
